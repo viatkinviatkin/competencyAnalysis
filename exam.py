@@ -114,6 +114,7 @@ for vacancy in vacancies[:8:]:
         
         sqlite_connection.execute(f"INSERT INTO JobOpenings (LinkHH, Salary) VALUES('{vacancy}', {salary})")
         
+   
 
         for skill in skills_select:
             print('skill',skill,'salary', salary)
@@ -122,9 +123,13 @@ for vacancy in vacancies[:8:]:
             cur = sqlite_connection.cursor()
             cur.execute(f"SELECT * FROM Competency WHERE Name = '{skill}'")
             rows = cur.fetchall()
-            if(rows.count == 0):
-                sqlite_connection.execute(f"INSERT INTO Competency (Name) VALUES({skill})")
+            if(len(rows) == 0):
+                sqlite_connection.execute(f"INSERT INTO Competency (Name) VALUES('{skill}')")
+                sqlite_connection.commit()
             sqlite_connection.execute(f"INSERT INTO refJobCompetency (JobID, CompetID) VALUES((SELECT ID FROM JobOpenings WHERE LinkHH = '{vacancy}'), (SELECT ID FROM Competency WHERE Name = '{skill}'))")
+            sqlite_connection.commit()
+            cur.close()
+            
     except:
         print('Не удалось спарсить')
     driver.quit()
@@ -169,15 +174,15 @@ for obj in result_avg: dict_result_avg[obj.skill] = obj.avg_salary
 
 salary_barchart(dict(itertools.islice(dict_result_avg.items(), 10)),dict(itertools.islice(dict_result_max.items(), 10)))
 
-#DB компетенция - max_salary
-for obj in result_max:
-    print('skill',obj.skill,'max_salary',obj.max_salary)
+# #DB компетенция - max_salary
+# for obj in result_max:
+#     print('skill',obj.skill,'max_salary',obj.max_salary)
 
-#DB компетенция - avg_salary
-for obj in result_avg:
-    print('skill',obj.skill,'avg_salary',obj.avg_salary)
+# #DB компетенция - avg_salary
+# for obj in result_avg:
+#     print('skill',obj.skill,'avg_salary',obj.avg_salary)
 
 
-#DB компетенция - частотность
-for row in freq:
-    print('key',freq[row],'value',row)
+# #DB компетенция - частотность
+# for row in freq:
+#     print('key',freq[row],'value',row)
