@@ -8,6 +8,7 @@ import numpy as np
 from collections import Counter
 import itertools
 import re
+import sqlite3
 
 JOB = 'повар'
 QUERY = 'https://perm.hh.ru/search/vacancy?clusters=true&area=72&ored_clusters=true&enable_snippets=true&salary=&text='
@@ -97,6 +98,7 @@ driver.quit()
 
 competencies = []
 skills_salary = []
+sqlite_connection = sqlite3.connect('analysisHH.db')
 for vacancy in vacancies[:8:]:
     driver = connect(vacancy)
     try:
@@ -109,11 +111,20 @@ for vacancy in vacancies[:8:]:
 
         #DB табличка вакансия-зп
         # insert vacancy,salary into table1
+        
+        sqlite_connection.execute(f"INSERT INTO JobOpenings (LinkHH, Salary) VALUES('{vacancy}', {salary})")
+        
 
         for skill in skills_select:
             print('skill',skill,'salary', salary)
             skills_salary_obj = type('',(),{'skill':skill, 'salary':salary})()
             skills_salary.append(skills_salary_obj)
+            cur = sqlite_connection.cursor()
+            cur.execute(f"SELECT * FROM Competency WHERE Name = '{skill}'")
+            rows = cur.fetchall()
+            if(rows.count == 0):
+                sqlite_connection.execute(f"INSERT INTO Competency (Name) VALUES({skill})")
+            sqlite_connection.execute(f"INSERT INTO refJobCompetency (JobID, CompetID) VALUES((SELECT ID FROM JobOpenings WHERE LinkHH = '{vacancy}'), (SELECT ID FROM Competency WHERE Name = '{skill}'))")
     except:
         print('Не удалось спарсить')
     driver.quit()
