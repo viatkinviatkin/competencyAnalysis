@@ -107,6 +107,9 @@ for vacancy in vacancies[:8:]:
         salary_DOM = driver.find_element(By.CSS_SELECTOR, 'span.bloko-header-2.bloko-header-2_lite')
         salary = get_salary(salary_DOM)
 
+        #DB табличка вакансия-зп
+        # insert vacancy,salary into table1
+
         for skill in skills_select:
             print('skill',skill,'salary', salary)
             skills_salary_obj = type('',(),{'skill':skill, 'salary':salary})()
@@ -155,13 +158,15 @@ for obj in result_avg: dict_result_avg[obj.skill] = obj.avg_salary
 
 salary_barchart(dict(itertools.islice(dict_result_avg.items(), 10)),dict(itertools.islice(dict_result_max.items(), 10)))
 
-##DB
+#DB компетенция - max_salary
 for obj in result_max:
     print('skill',obj.skill,'max_salary',obj.max_salary)
 
+#DB компетенция - avg_salary
 for obj in result_avg:
     print('skill',obj.skill,'avg_salary',obj.avg_salary)
 
 
+#DB компетенция - частотность
 for row in freq:
     print('key',freq[row],'value',row)
