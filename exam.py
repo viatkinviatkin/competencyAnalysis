@@ -8,6 +8,7 @@ import numpy as np
 from collections import Counter
 import itertools
 import re
+import sqlite3
 
 JOB = 'повар'
 QUERY = 'https://perm.hh.ru/search/vacancy?clusters=true&area=72&ored_clusters=true&enable_snippets=true&salary=&text='
@@ -97,6 +98,7 @@ driver.quit()
 
 competencies = []
 skills_salary = []
+sqlite_connection = sqlite3.connect('analysisHH.db')
 for vacancy in vacancies[:8:]:
     driver = connect(vacancy)
     try:
@@ -109,11 +111,25 @@ for vacancy in vacancies[:8:]:
 
         #DB табличка вакансия-зп
         # insert vacancy,salary into table1
+        
+        sqlite_connection.execute(f"INSERT INTO JobOpenings (LinkHH, Salary) VALUES('{vacancy}', {salary})")
+        
+   
 
         for skill in skills_select:
             print('skill',skill,'salary', salary)
             skills_salary_obj = type('',(),{'skill':skill, 'salary':salary})()
             skills_salary.append(skills_salary_obj)
+            cur = sqlite_connection.cursor()
+            cur.execute(f"SELECT * FROM Competency WHERE Name = '{skill}'")
+            rows = cur.fetchall()
+            if(len(rows) == 0):
+                sqlite_connection.execute(f"INSERT INTO Competency (Name) VALUES('{skill}')")
+                sqlite_connection.commit()
+            sqlite_connection.execute(f"INSERT INTO refJobCompetency (JobID, CompetID) VALUES((SELECT ID FROM JobOpenings WHERE LinkHH = '{vacancy}'), (SELECT ID FROM Competency WHERE Name = '{skill}'))")
+            sqlite_connection.commit()
+            cur.close()
+            
     except:
         print('Не удалось спарсить')
     driver.quit()
@@ -158,15 +174,15 @@ for obj in result_avg: dict_result_avg[obj.skill] = obj.avg_salary
 
 salary_barchart(dict(itertools.islice(dict_result_avg.items(), 10)),dict(itertools.islice(dict_result_max.items(), 10)))
 
-#DB компетенция - max_salary
-for obj in result_max:
-    print('skill',obj.skill,'max_salary',obj.max_salary)
+# #DB компетенция - max_salary
+# for obj in result_max:
+#     print('skill',obj.skill,'max_salary',obj.max_salary)
 
-#DB компетенция - avg_salary
-for obj in result_avg:
-    print('skill',obj.skill,'avg_salary',obj.avg_salary)
+# #DB компетенция - avg_salary
+# for obj in result_avg:
+#     print('skill',obj.skill,'avg_salary',obj.avg_salary)
 
 
-#DB компетенция - частотность
-for row in freq:
-    print('key',freq[row],'value',row)
+# #DB компетенция - частотность
+# for row in freq:
+#     print('key',freq[row],'value',row)
